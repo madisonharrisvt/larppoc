@@ -1,52 +1,93 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Web.Http;
-using larp_poc_api.Models;
 
 namespace larp_poc_api.Controllers
 {
     public class CharactersController : ApiController
     {
-        private readonly string _settings = ConfigurationManager.ConnectionStrings["SqlConnectionString"].ConnectionString;
+        private static readonly string Settings = ConfigurationManager.ConnectionStrings["SqlConnectionString"].ConnectionString;
 
-        private readonly Character[] _characters = new Character[]
+        [HttpGet]
+        public List<Dictionary<string, string>> GetAllCharacters()
         {
-            new Character { Id = 1, Name = "Tomato Soup", Category = "Groceries", Price = 1 },
-            new Character { Id = 2, Name = "Yo-yo", Category = "Toys", Price = 3.75M },
-            new Character { Id = 3, Name = "Hammer", Category = "Hardware", Price = 16.99M }
-        };
+            string query = "select * from tblCharacter";
 
-        public IEnumerable<Character> GetAllCharacters()
-        {
-            SqlDataReader rdr = null;
-            SqlConnection conn = new SqlConnection(_settings);
-            conn.Open();
-            SqlCommand cmd = new SqlCommand("select * from tblCharacter", conn);
-            rdr = cmd.ExecuteReader();
-            conn.Close();
-            conn.Dispose();
+            List<Dictionary<string, string>> results = ExecuteMsSqlQuery(query);
 
-            return _characters;
+            return results;
         }
 
-        public IHttpActionResult GetCharacter(int id)
+        public static List<Dictionary<string, string>> ExecuteMsSqlQuery(string queryString)
         {
-            SqlDataReader rdr = null;
-            SqlConnection conn = new SqlConnection(_settings);
+            var resultingData = new List<Dictionary<string, string>>();
+
+            try
+            {
+                using (var connection = new SqlConnection(Settings))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(queryString, connection))
+                    {
+                        var resultReader = command.ExecuteReader();
+
+                        if (resultReader.HasRows)
+                        {
+                            while (resultReader.Read())
+                            {
+                                var row = new Dictionary<string, string>();
+
+                                for (var i = 0; i < resultReader.FieldCount; i++)
+                                {
+                                    var fieldValue = resultReader[i].ToString();
+
+                                    var columnName = resultReader.GetName(i);
+
+                                    row.Add(columnName, fieldValue);
+                                }
+
+                                resultingData.Add(row);
+                            }
+                        }
+                        else
+                        {
+                            resultReader.Read();
+
+                            var emptyRow = new Dictionary<string, string>();
+
+                            for (var i = 0; i < resultReader.FieldCount; i++)
+                            {
+                                var columnName = resultReader.GetName(i);
+                                emptyRow.Add(columnName, null);
+                            }
+
+                            resultingData.Add(emptyRow);
+                        }
+
+                        return resultingData;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Sql query execution failed with following error: " + e);
+            }
+        }
+
+        [HttpPost]
+        public IHttpActionResult AddCharacter([FromBody] string name)
+        {
+            SqlConnection conn = new SqlConnection(Settings);
             conn.Open();
-            SqlCommand cmd = new SqlCommand("select * from tblCharacter", conn);
-            rdr = cmd.ExecuteReader();
+            SqlCommand cmd = new SqlCommand($"INSERT INTO tblCharacter (CharacterID, CharacterName) VALUES(NEWID (), '{name}')", conn);
+            cmd.ExecuteReader();
             conn.Close();
             conn.Dispose();
 
-            var character = _characters.FirstOrDefault((p) => p.Id == id);
-            if (character == null)
-            {
-                return NotFound();
-            }
-            return Ok(character);
+            return Ok(GetAllCharacters());
         }
     }
 }
