@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Character App</title>
+</head>
+<body>
+
+<div>
+    <h2>All Characters</h2>
+    <ul id="characters" />
+</div>
+<div>
+    <h2>Search by ID</h2>
+    <input type="text" id="charId" size="5" />
+    <input type="button" value="Search" onclick="find();" />
+    <p id="character" />
+</div>
+
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.0.3.min.js"></script>
+<script>
+    var uri = 'api/characters';
+
+    $(document).ready(function () {
+        // Send an AJAX request
+        $.getJSON(uri)
+            .done(function (data) {
+                // On success, 'data' contains a list of characters.
+                $.each(data, function (key, item) {
+                    // Add a list item for the character.
+                    $('<li>', { text: formatItem(item) }).appendTo($('#characters'));
+                });
+            });
+    });
+
+    function formatItem(item) {
+        return item.Name + ': $' + item.Price;
+    }
+
+    function find() {
+        var id = $('#charId').val();
+        $.getJSON(uri + '/' + id)
+            .done(function (data) {
+                $('#character').text(formatItem(data));
+            })
+            .fail(function (jqXHR, textStatus, err) {
+                $('#character').text('Error: ' + err);
+            });
+    }
+</script>
+</body>
+</html>
