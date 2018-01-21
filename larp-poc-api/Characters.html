@@ -58,22 +58,25 @@
                 });
         }
 
-        function add() {
+        function remove() {
             var id = $('#charId').val();
-            $.post(uri + '/' + id, '=' + id)
-                .done(function (data) {
+
+            $.ajax({
+                url: uri + '/' + id,
+                type: 'DELETE',
+                data: '=' + id,
+                success: (function(data) {
                     $('#characters').html('');
-                    $.each(data, function (i, item) {
-                        $.each(item,
-                            function (key, value) {
-                                // Add a list item for the character.
-                                $('<li>' + key + ': ' + value + '</li>').appendTo($('#characters'));
-                            });
-                    });
+                    $.each(data,
+                        function(i, item) {
+                            $.each(item,
+                                function(key, value) {
+                                    // Add a list item for the character.
+                                    $('<li>' + key + ': ' + value + '</li>').appendTo($('#characters'));
+                                });
+                        });
                 })
-                .fail(function (jqXHR, textStatus, err) {
-                    $('#character').text('Error: ' + err);
-                });
+            });
         }
     </script>
 </body>
