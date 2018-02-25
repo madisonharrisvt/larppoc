@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Web.Http;
+using Newtonsoft.Json.Linq;
 
 namespace larp_poc_api.Controllers
 {
-    public class CharactersController : ApiController
+    public class CharacterListController : ApiController
     {
         [HttpGet]
         public List<Dictionary<string, string>> GetAllCharacters()
@@ -18,10 +17,11 @@ namespace larp_poc_api.Controllers
             return results;
         }
 
+        /*
         [HttpPost]
         public IHttpActionResult AddCharacter([FromBody] string name)
         {
-            var query = $"INSERT INTO tblCharacter (CharacterID, CharacterName) VALUES(NEWID (), '{name}')";
+            var query = $"INSERT INTO tblCharacter (id, name) VALUES(NEWID (), '{name}')";
 
             MSSQL.ExecuteNonQuery(query);
 
@@ -32,11 +32,21 @@ namespace larp_poc_api.Controllers
         public IHttpActionResult DeleteCharacter([FromBody] string id)
         {
             var sqlId = new SqlParameter("id", SqlDbType.UniqueIdentifier) {Value = new Guid(id)};
-            var query = $"DELETE FROM tblCharacter WHERE CharacterId = @id";
+            var query = $"DELETE FROM tblCharacter WHERE id = @id";
 
             MSSQL.ExecuteNonQuery(query, sqlId);
 
             return Ok(GetAllCharacters());
+        }*/
+
+        [HttpPost]
+        public Dictionary<string, string> AddCharacter([FromBody] JObject body)
+        {
+            var query = $@" DECLARE @newId varchar(255) = NEWID ()  INSERT INTO tblCharacter (id, name) VALUES(@newId, '{body["name"]}')  SELECT * from tblCharacter WHERE id = @newId";
+
+            var results = MSSQL.ExecuteMsSqlQuery(query);
+
+            return results.FirstOrDefault();
         }
     }
 }

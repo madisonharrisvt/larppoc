@@ -68,7 +68,7 @@ namespace larp_poc_api
 
         public static void ExecuteNonQuery(string queryString)
         {
-            SqlConnection conn = new SqlConnection(MSSQL.Settings);
+            SqlConnection conn = new SqlConnection(Settings);
             conn.Open();
             SqlCommand cmd = new SqlCommand(queryString, conn);
             cmd.ExecuteReader();
@@ -78,7 +78,7 @@ namespace larp_poc_api
 
         public static void ExecuteNonQuery(string queryString, SqlParameter parameter)
         {
-            SqlConnection conn = new SqlConnection(MSSQL.Settings);
+            SqlConnection conn = new SqlConnection(Settings);
             conn.Open();
             SqlCommand cmd = new SqlCommand(queryString, conn);
             cmd.Parameters.Add(parameter);
