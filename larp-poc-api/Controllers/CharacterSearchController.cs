@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Web.Http;
 
 namespace larp_poc_api.Controllers
@@ -8,9 +10,11 @@ namespace larp_poc_api.Controllers
         [HttpGet]
         public List<Dictionary<string, string>> GetByPartialName(string id)
         {
-            var query = $"SELECT * FROM tblCharacter WHERE name LIKE '%{id}%' ";
+            var query = $"SELECT * FROM tblCharacter WHERE name LIKE '%' + @id + '%' ";
 
-            var results = MSSQL.ExecuteMsSqlQuery(query);
+            var listParams = new SqlParameter[] { new SqlParameter("id", SqlDbType.NVarChar) { Value = id } };
+
+            var results = MSSQL.ExecuteMsSqlQuery(query, listParams);
 
             return results;
         }
