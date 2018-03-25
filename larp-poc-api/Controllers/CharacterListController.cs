@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Http;
 using Newtonsoft.Json.Linq;
@@ -42,9 +44,12 @@ namespace larp_poc_api.Controllers
         [HttpPost]
         public Dictionary<string, string> AddCharacter([FromBody] JObject body)
         {
-            var query = $@" DECLARE @newId varchar(255) = NEWID ()  INSERT INTO tblCharacter (id, name) VALUES(@newId, '{body["name"]}')  SELECT * from tblCharacter WHERE id = @newId";
+            var name = body["name"];
+            var query = $@" DECLARE @newId varchar(255) = NEWID ()  INSERT INTO tblCharacter (id, name) VALUES(@newId, @name)  SELECT * from tblCharacter WHERE id = @newId";
 
-            var results = MSSQL.ExecuteMsSqlQuery(query);
+            var listParams = new SqlParameter[] { new SqlParameter("name", SqlDbType.NVarChar) { Value = name } };
+
+            var results = MSSQL.ExecuteMsSqlQuery(query, listParams);
 
             return results.FirstOrDefault();
         }

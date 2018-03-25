@@ -66,6 +66,65 @@ namespace larp_poc_api
             }
         }
 
+        public static List<Dictionary<string, string>> ExecuteMsSqlQuery(string queryString, SqlParameter[] sqlParam)
+        {
+            var resultingData = new List<Dictionary<string, string>>();
+
+            try
+            {
+                using (var connection = new SqlConnection(Settings))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(queryString, connection))
+                    {
+                        command.Parameters.AddRange(sqlParam);
+
+                        var resultReader = command.ExecuteReader();
+
+                        if (resultReader.HasRows)
+                        {
+                            while (resultReader.Read())
+                            {
+                                var row = new Dictionary<string, string>();
+
+                                for (var i = 0; i < resultReader.FieldCount; i++)
+                                {
+                                    var fieldValue = resultReader[i].ToString();
+
+                                    var columnName = resultReader.GetName(i);
+
+                                    row.Add(columnName, fieldValue);
+                                }
+
+                                resultingData.Add(row);
+                            }
+                        }
+                        else
+                        {
+                            resultReader.Read();
+
+                            var emptyRow = new Dictionary<string, string>();
+
+                            for (var i = 0; i < resultReader.FieldCount; i++)
+                            {
+                                var columnName = resultReader.GetName(i);
+                                emptyRow.Add(columnName, null);
+                            }
+
+                            resultingData.Add(emptyRow);
+                        }
+
+                        return resultingData;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Sql query execution failed with following error: " + e);
+            }
+        }
+
         public static void ExecuteNonQuery(string queryString)
         {
             SqlConnection conn = new SqlConnection(Settings);
